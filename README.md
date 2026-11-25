@@ -135,3 +135,19 @@ Precios **bajo demanda en us-east-1**, tomados de la **lista oficial de precios 
 | Eficiencia de rendimiento | Caché en CloudFront, pool de conexiones con RDS Proxy | Medir con una prueba de carga |
 | Optimización de costos | Escala a cero en los workers; Budgets | Hecho (sección 7); revisar al cambiar los precios |
 | Sostenibilidad | Servicios administrados y escalado automático evitan capacidad ociosa | — |
+
+## 10. Experimentos de costo
+
+Se corren con `python3 experimentos.py` (mismos precios oficiales de la sección 7, región us-east-1, bajo demanda):
+
+| Caso | Total mensual (USD) | Diferencia con la base |
+|---|---|---|
+| Arquitectura propuesta (base) | 161,63 | 0,00 |
+| Sin RDS Proxy | 139,73 | −21,90 |
+| Sin Multi-AZ (una sola zona para la base) | 135,24 | −26,39 |
+| Sin Proxy y sin Multi-AZ | 113,34 | −48,29 |
+| 4 tareas de la app en vez de 2 | 204,97 | +43,34 |
+
+**Lectura:** quitar Proxy y Multi-AZ baja el total unos 30 %, pero **sigue siendo casi el triple** de los ≈ USD 40 de las plataformas actuales, así que la conclusión de no migrar no cambia. Y esa rebaja se paga en disponibilidad: sin Multi-AZ, una caída de la zona de la base deja la aplicación sin datos hasta restaurar. Duplicar las tareas de la app suma unos USD 43 (el cómputo y sus dos direcciones IPv4 públicas).
+
+El script no cubre otra región: los archivos de precios por región tienen la misma estructura, así que repetirlo con otra región es un ejercicio de cambiar la dirección de descarga.

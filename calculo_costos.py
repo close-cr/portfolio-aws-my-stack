@@ -13,6 +13,7 @@ P = dict(
     fargate_vcpu_h=0.04048, fargate_gb_h=0.004445,
     alb_h=0.0225, alb_lcu_h=0.008,
     rds_t4g_small_multiaz_h=0.065, rds_gp3_multiaz_gb_mes=0.23, rds_proxy_vcpu_h=0.015,
+    rds_t4g_small_single_h=0.032, rds_gp3_single_gb_mes=0.115,  # sin Multi-AZ (para los experimentos)
     ipv4_h=0.005,
     lambda_gb_s=0.0000166667, lambda_millon_peticiones=0.20,
     lambda_gratis_gb_s=400_000, lambda_gratis_peticiones=1_000_000,
@@ -33,18 +34,20 @@ S = dict(
     logs_gb=2, waf_reglas=3, waf_millones_peticiones=1,
 )
 
-def calcular():
-    f = S["tareas"] * (S["vcpu"] * P["fargate_vcpu_h"] + S["gb_ram"] * P["fargate_gb_h"]) * H
+def calcular(multi_az=True, proxy=True, tareas=None):
+    tareas = tareas or S["tareas"]
+    ips = 2 + tareas  # 2 del balanceador (una por zona) + una por tarea
+    f = tareas * (S["vcpu"] * P["fargate_vcpu_h"] + S["gb_ram"] * P["fargate_gb_h"]) * H
     lam_gb_s = S["invocaciones_mes"] * S["segundos"] * S["lambda_gb"]
     lam = max(0, lam_gb_s - P["lambda_gratis_gb_s"]) * P["lambda_gb_s"] + max(0, S["invocaciones_mes"] - P["lambda_gratis_peticiones"]) / 1e6 * P["lambda_millon_peticiones"]
     filas = [
-        ("Fargate (app, 2 tareas 0,5 vCPU / 1 GB, 24/7)", f),
+        (f"Fargate (app, {tareas} tareas 0,5 vCPU / 1 GB, 24/7)", f),
         ("Application Load Balancer (hora)", P["alb_h"] * H),
         ("Application Load Balancer (capacidad usada, 1 LCU)", S["lcu_promedio"] * P["alb_lcu_h"] * H),
-        ("RDS PostgreSQL Multi-AZ db.t4g.small", P["rds_t4g_small_multiaz_h"] * H),
-        ("RDS almacenamiento 20 GB (gp3, Multi-AZ)", S["db_gb"] * P["rds_gp3_multiaz_gb_mes"]),
-        ("RDS Proxy (2 vCPU de la instancia)", S["db_vcpus"] * P["rds_proxy_vcpu_h"] * H),
-        ("Direcciones IPv4 públicas (4)", S["ips_publicas"] * P["ipv4_h"] * H),
+        ("RDS PostgreSQL Multi-AZ db.t4g.small" if multi_az else "RDS PostgreSQL Single-AZ db.t4g.small", (P["rds_t4g_small_multiaz_h"] if multi_az else P["rds_t4g_small_single_h"]) * H),
+        ("RDS almacenamiento 20 GB (gp3, Multi-AZ)" if multi_az else "RDS almacenamiento 20 GB (gp3, Single-AZ)", S["db_gb"] * (P["rds_gp3_multiaz_gb_mes"] if multi_az else P["rds_gp3_single_gb_mes"])),
+        ("RDS Proxy (2 vCPU de la instancia)", (S["db_vcpus"] * P["rds_proxy_vcpu_h"] * H) if proxy else 0.0),
+        (f"Direcciones IPv4 públicas ({ips})", ips * P["ipv4_h"] * H),
         (f"Lambda workers ({lam_gb_s:,.0f} GB-s: dentro de la capa gratuita)", lam),
         ("SQS + EventBridge Scheduler (dentro de la capa gratuita)", 0.0),
         ("S3 (5 GB)", S["s3_gb"] * P["s3_gb_mes"]),
