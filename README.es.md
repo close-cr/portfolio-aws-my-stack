@@ -1,5 +1,6 @@
 🇬🇧 [English](README.md) · 🇪🇸 Español
 
+🎬 **Video (en inglés, ~9 min) que explica los cuatro proyectos del portafolio:** [verlo](https://github.com/close-cr/close-cr/blob/main/media/portfolio-walkthrough.mp4)
 # Mi stack en lenguaje AWS: Cont Finance sobre servicios de nube
 
 Ejercicio de arquitectura: tomar una aplicación real que ya está en producción (**Cont Finance**, una plataforma web de contabilidad para contadores de Costa Rica) y **explicarla con los servicios de AWS**: qué equivale a qué, quién es responsable de cada cosa, cómo se lograría alta disponibilidad y qué cambiaría en seguridad y costos.

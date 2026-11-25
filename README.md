@@ -1,5 +1,6 @@
 🇬🇧 English · 🇪🇸 [Español](README.es.md)
 
+🎬 **Video walkthrough (English, ~9 min) of all four portfolio projects:** [watch](https://github.com/close-cr/close-cr/blob/main/media/portfolio-walkthrough.mp4)
 # My stack in AWS terms: a real web app mapped onto cloud services
 
 An architecture exercise: take an application that is already in production (**Cont Finance**, an accounting web platform for accountants in Costa Rica) and **explain it with AWS services**: what maps to what, who is responsible for each part, how high availability would be achieved, and what would change in security and cost.
